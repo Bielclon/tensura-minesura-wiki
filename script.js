@@ -564,7 +564,7 @@
   ];
   const RTL_LANGS = new Set(['ar']);
 
-  let lang = localStorage.getItem('tm-wiki-lang') || 'es';
+  let lang = localStorage.getItem('tm-wiki-lang') || 'en';
   if (!I18N[lang]) lang = 'en';
 
   const t = (key, ...args) => {
