@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tensura: Minesura Wiki</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="wiki-shell">
+
+  <aside class="sidebar">
+    <div class="sidebar-brand" onclick="location.hash='#/'">
+      <div class="brand-title">Tensura<span class="accent">Minesura</span></div>
+      <div class="brand-sub" id="brand-sub"></div>
+    </div>
+
+    <div class="lang-switch" id="lang-switch">
+      <select id="lang-select" class="lang-select"></select>
+    </div>
+
+    <div class="sidebar-search">
+      <input type="text" id="global-search" placeholder="" autocomplete="off">
+      <div id="search-results" class="search-results"></div>
+    </div>
+
+    <nav id="side-nav" class="side-nav"><!-- generado por JS --></nav>
+
+    <div class="sidebar-footer">Generated from <code>tensura_minesura-2.0.0.jar</code></div>
+  </aside>
+
+  <div class="mobile-topbar">
+    <button id="menu-toggle" aria-label="Menú">☰</button>
+    <div class="mobile-title">Tensura<span class="accent">Minesura</span></div>
+  </div>
+
+  <main id="content" class="content"><!-- generado por JS --></main>
+
+</div>
+
+<script src="skills-data.js"></script>
+<script src="intrinsic-data.js"></script>
+<script src="commands-data.js"></script>
+<script src="script.js"></script>
+</body>
+</html>
