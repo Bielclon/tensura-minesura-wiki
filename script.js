@@ -575,8 +575,37 @@
   // Content (skills/commands) is only authored in en/es; fall back to
   // English for any language that doesn't have a translation yet.
   function loc(obj) {
+    if (obj == null) return obj;
+    if (typeof obj !== 'object') return obj;
     return obj[lang] || obj.en || obj.es;
   }
+
+  // All language variants of a localized field joined together (used for search so a
+  // term matches regardless of the currently selected language). Safe on plain strings.
+  function allText(obj) {
+    if (obj == null) return '';
+    if (typeof obj !== 'object') return String(obj);
+    return Object.values(obj).join(' ');
+  }
+
+  // Fold per-language content (content-i18n.js) into the skill/intrinsic objects so
+  // descHtml, excerpt, evolution and race become { en, es, ... } and can be localized
+  // via loc(). English stays in the -data.js files as the fallback.
+  (function mergeContentI18n() {
+    const src = (typeof CONTENT_I18N !== 'undefined') ? CONTENT_I18N : {};
+    const wrap = (list, type) => (list || []).forEach(s => {
+      const tr = (src[type] || {})[s.id] || {};
+      ['descHtml', 'excerpt', 'evolution', 'race'].forEach(f => {
+        if (s[f] == null || typeof s[f] === 'object') return;
+        const o = { en: s[f] };
+        const t2 = tr[f];
+        if (t2) for (const k in t2) o[k] = t2[k];
+        s[f] = o;
+      });
+    });
+    if (typeof SKILLS !== 'undefined') wrap(SKILLS, 'skills');
+    if (typeof INTRINSIC_SKILLS !== 'undefined') wrap(INTRINSIC_SKILLS, 'intrinsics');
+  })();
 
   function setLang(l) {
     lang = l;
@@ -744,7 +773,7 @@
     return `
       <a class="entry-card" href="#/skill/${s.id}" style="--card-accent:${s.accent}">
         <h4>${esc(s.name)}</h4>
-        <p>${esc(s.excerpt)}</p>
+        <p>${esc(loc(s.excerpt))}</p>
       </a>
     `;
   }
@@ -762,8 +791,8 @@
     return `
       <a class="entry-card" href="#/intrinsic/${s.id}" style="--card-accent:${s.accent}">
         <h4>${esc(s.name)}</h4>
-        ${s.race ? `<div class="evo">${esc(s.race)}</div>` : ''}
-        <p>${esc(s.excerpt)}</p>
+        ${s.race ? `<div class="evo">${esc(loc(s.race))}</div>` : ''}
+        <p>${esc(loc(s.excerpt))}</p>
       </a>
     `;
   }
@@ -797,11 +826,11 @@
     return `
       <div class="crumbs"><a href="#/">${t('crumbsHome')}</a> / <a href="#/skills">${t('crumbsSkills')}</a> / ${esc(s.name)}</div>
       <h1 class="page-title" style="color:${s.accent}">${esc(s.name)} <span class="badge ${groupBadge}">${groupLabel}</span></h1>
-      ${s.evolution ? `<p class="page-lede">${esc(s.evolution)}</p>` : ''}
+      ${s.evolution ? `<p class="page-lede">${esc(loc(s.evolution))}</p>` : ''}
 
       <div class="page-layout">
         <div>
-          <div class="desc-block">${s.descHtml}</div>
+          <div class="desc-block">${loc(s.descHtml)}</div>
         </div>
         <div>
           <div class="infobox">
@@ -809,7 +838,7 @@
             <div class="infobox-row"><span class="k">${t('infoType')}</span><span class="v">${t('infoTypeVal')}</span></div>
             <div class="infobox-row"><span class="k">${t('infoCategory')}</span><span class="v">${groupLabel}</span></div>
             <div class="infobox-row"><span class="k">${t('infoObtained')}</span><span class="v">${t('infoObtainedVal')}</span></div>
-            ${s.evolution ? `<div class="infobox-row"><span class="k">${t('infoEvolves')}</span><span class="v">${esc(s.evolution.replace('Evolves into ', ''))}</span></div>` : ''}
+            ${s.evolution ? `<div class="infobox-row"><span class="k">${t('infoEvolves')}</span><span class="v">${esc(loc(s.evolution).replace(/^Evolves into /, ''))}</span></div>` : ''}
           </div>
         </div>
       </div>
@@ -840,17 +869,17 @@
     return `
       <div class="crumbs"><a href="#/">${t('crumbsHome')}</a> / <a href="#/intrinsics">${t('crumbsIntrinsic')}</a> / ${esc(s.name)}</div>
       <h1 class="page-title" style="color:${s.accent}">${esc(s.name)} <span class="badge badge-intrinsic">${t('infoTypeValIntrinsic')}</span></h1>
-      ${s.race ? `<p class="page-lede">${esc(s.race)}</p>` : ''}
+      ${s.race ? `<p class="page-lede">${esc(loc(s.race))}</p>` : ''}
 
       <div class="page-layout">
         <div>
-          <div class="desc-block">${s.descHtml}</div>
+          <div class="desc-block">${loc(s.descHtml)}</div>
         </div>
         <div>
           <div class="infobox">
             <div class="infobox-header" style="color:${s.accent}">${esc(s.name)}</div>
             <div class="infobox-row"><span class="k">${t('infoType')}</span><span class="v">${t('infoTypeValIntrinsic')}</span></div>
-            ${s.race ? `<div class="infobox-row"><span class="k">${t('infoRace')}</span><span class="v">${esc(s.race)}</span></div>` : ''}
+            ${s.race ? `<div class="infobox-row"><span class="k">${t('infoRace')}</span><span class="v">${esc(loc(s.race))}</span></div>` : ''}
             <div class="infobox-row"><span class="k">${t('infoObtained')}</span><span class="v">${t('infoObtainedRaceVal')}</span></div>
           </div>
         </div>
@@ -943,10 +972,10 @@
   function buildSearchIndex() {
     const idx = [];
     for (const s of SKILLS) {
-      idx.push({ kind: t('kindSkill'), label: s.name, route: '/skill/' + s.id, haystack: (s.name + ' ' + s.excerpt).toLowerCase() });
+      idx.push({ kind: t('kindSkill'), label: s.name, route: '/skill/' + s.id, haystack: (s.name + ' ' + allText(s.excerpt)).toLowerCase() });
     }
     for (const s of INTRINSIC_SKILLS) {
-      idx.push({ kind: t('navIntrinsic'), label: s.name, route: '/intrinsic/' + s.id, haystack: (s.name + ' ' + (s.race || '') + ' ' + s.excerpt).toLowerCase() });
+      idx.push({ kind: t('navIntrinsic'), label: s.name, route: '/intrinsic/' + s.id, haystack: (s.name + ' ' + allText(s.race) + ' ' + allText(s.excerpt)).toLowerCase() });
     }
     for (const c of COMMANDS) {
       idx.push({
